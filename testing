@@ -1,0 +1,13 @@
+menu = {
+    "Music" : {"Liked songs" : print("open liked songs"),
+               "Playlists" : print("opened playlists"),
+               "Search" : print("opened searc"),
+               "Local" : print("opened dl")},
+
+    "Games" : { "PS1" : {"Castlevania" : print("Launch castlevania"),
+                        "Doom" : print("Launch Doom")},
+                "Gameboy": ("Launchgameboy")}
+}
+
+for sub in menu:
+    
