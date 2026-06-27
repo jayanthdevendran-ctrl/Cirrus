@@ -25,6 +25,9 @@ def runPSGAME():
 def runGAMEBOY():
     print
 
+def poweroff():
+    subprocess.run(["sudo", "poweroff"])
+
 Doom = runDoom
 ps1 = runPSGAME
 Gameboy = runGAMEBOY
@@ -36,7 +39,7 @@ Local = openlocal
 Settings = ["Backlight", "Voume", "Go Back"]
 Games = [Doom, ps1, Gameboy, "Go Back"]
 Music = [LikedSongs, Playlists, Search, Local, "Go Back"]
-menus = [ Music, Games, Settings]
+menus = [ Music, Games, Settings, "PowerOff"]
 
 stack = [menus] 
 currentmenu = stack[-1]
@@ -73,8 +76,11 @@ while True:
             stack.append(currentmenu[x])
             x = 0
         else:
-            currentmenu[x]()        
+            currentmenu[x]()
 
+    if selecttrue == True and currentmenu[x] != "Power Off":
+        poweroff()
+            
     currentmenu = stack[-1]
     draw_main(currentmenu, x)
     time.sleep(0.2)
