@@ -1,12 +1,11 @@
 import subprocess
 import time
-from PIL import ImageFont
 from gpiozero import Button
 from luma.core.interface.serial import spi
 from luma.lcd.device import ili9341
 from luma.core.render import canvas
 serial = spi(port=0, device=0, gpio_DC=25, gpio_RST=27)
-device = ili9341(serial, width=160, height=240)
+device = ili9341(serial, width=320, height=240)
 
 def openlikedsongs():
     print
@@ -24,9 +23,12 @@ def runPSGAME():
     print
 def runGAMEBOY():
     print
-
 def poweroff():
     subprocess.run(["sudo", "poweroff"])
+def goback():
+    x = 0
+    stack.pop()
+
 
 Doom = runDoom
 ps1 = runPSGAME
@@ -36,12 +38,14 @@ Playlists = openplaylists
 Search = opensearch
 Local = openlocal
 
-Settings = ["Backlight", "Voume", "Go Back"]
-Games = [Doom, ps1, Gameboy, "Go Back"]
-Music = [LikedSongs, Playlists, Search, Local, "Go Back"]
-menus = [ Music, Games, Settings, "PowerOff"]
+menus = {"Menu" : {
+         "Music": {"Liked Songs" : openlikedsongs, "Playlists" : openplaylists, "Search": opensearch, "Go Back": goback}, 
+         "Games": {"Doom": runDoom, "PS1": runPSGAME, "Go Back": goback},
+         "Settings": ["Backlight", "Volume"] ,
+         "PowerOff": poweroff
+        }}
 
-stack = [menus] 
+stack = ["Menu"] 
 currentmenu = stack[-1]
 
 down = Button(26)
@@ -52,9 +56,18 @@ def draw_main(menu, selected_index):
     with canvas(device) as draw:
         for index, item in enumerate(menu):
             if index == selected_index:
-                draw.text((10, 15*(index+1)), item, fill = "yellow")
+                draw.text((10, 15*(index+1)), str(item), fill = "green")
             else:
-                draw.text((10, 15*(index+1)), item, fill = "white")
+                draw.text((10, 15*(index+1)), str(item), fill = "gray")
+
+def draw_menus(menu, selected_index):
+    keys = menu.keys()
+    with canvas(device) as draw:
+        for item in menu:
+            if keys.index(item) == selected_index:
+                draw.text((10, 15*(selected_index+1)), str(item), fill = "green")
+            else:
+                draw.text((10, 15*(selected_index+1)), str(item), fill = "gray")
 
 x = 0
 while True:
@@ -78,7 +91,7 @@ while True:
         else:
             currentmenu[x]()
 
-    if selecttrue == True and currentmenu[x] != "Power Off":
+    if selecttrue == True and currentmenu[x] == "Power Off":
         poweroff()
             
     currentmenu = stack[-1]
