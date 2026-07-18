@@ -1,0 +1,38 @@
+import tkinter as Tk
+root = Tk()
+root.title("cirrus.exe")
+root.geometry("430x320")
+
+devicestate = Tk.Frame(root, bg = "gray", width = 430, height = 15)
+devicestate.pack(side = "top")
+
+menu = Tk.Frame(root, bg = "lightblue", width = 430, height = 305)
+menu.pack(side = "bottom")
+menubox = Listbox(bottom, height = 305, width = 430, bg = "black", activestyle = "underline", fg = "blue")
+
+        
+
+
+
+menus = {"Menu" : {
+         "Music": {"Liked Songs" : openlikedsongs, "Playlists" : openplaylists, "Search": opensearch, "Go Back": goback}, 
+         "Games": {"Doom": runDoom, "PS1": runPSGAME, "Go Back": goback},
+         "Settings": {"Backlight": backlight, "Volume": volume} ,
+         "PowerOff": poweroff
+        }}
+
+stack = [menus["Menu"]] 
+currentmenu = stack[-1]
+
+down = Button(26)
+up = Button(24)
+select = Button(19, bounce_time=0.05)
+
+def draw_menus(menu, selected_index):
+    keys = menu.keys()
+    for index, item in enumerate(keys):
+        menubox.insert(index, str(item))
+
+
+
+root.mainloop()

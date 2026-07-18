@@ -7,6 +7,8 @@ from luma.core.render import canvas
 serial = spi(port=0, device=0, gpio_DC=25, gpio_RST=27)
 device = ili9341(serial, width=320, height=240)
 
+process = subprocess.Popen(['python3', '/home/cirrus/piplayer/test_selection.py'])
+
 def openlikedsongs():
     print
 def openplaylists():
@@ -56,6 +58,8 @@ def draw_menus(menu, selected_index):
                 draw.text((10, 15*(index+1)), str(item), fill = "green")
             else:
                 draw.text((10, 15*(index+1)), str(item), fill = "gray")
+
+
 
 x = 0
 while True:

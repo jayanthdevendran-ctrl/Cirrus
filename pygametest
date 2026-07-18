@@ -1,0 +1,14 @@
+import pygame
+
+
+
+pygame.init()
+
+screen = pygame.display.set_mode((480,320))
+screen.fill((0,0,255))
+pygame.display.flip()
+
+while True: 
+    pass
+
+rect = pygame.Rect(10, 20, 30, 30)
