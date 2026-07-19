@@ -59,8 +59,6 @@ def draw_menus(menu, selected_index):
             else:
                 draw.text((10, 15*(index+1)), str(item), fill = "gray")
 
-
-
 x = 0
 while True:
     keys = list(currentmenu.keys())

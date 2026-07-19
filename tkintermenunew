@@ -1,30 +1,89 @@
 import tkinter as tk
+import subprocess
+import time
+from gpiozero import Button
 
+select = Button(19, bounce_time=0.05)
 root = tk.Tk()
+root.title("Cirrus.exe")
+root.geometry("480x320")
 
-history = [Mainmenu]
+status_frame = tk.Frame(root)
+status_frame.geometry("480x15")
+status_frame.pack(side = "top")
 
-class Cirrus(tk.TK):
-    def __init__(self):
-        super().__init__()
-        self.title("Cirrus.exe")
-        self.geometry("480x320")
-        
-        self.status_frame = tk.Frame(self, bg = "gray", height = 20)
-        self.status_frame.pack (fill = "x")
+content_frame = tk.Frame(root)
+content_frame.geometry("480x305")
+content_frame.pack(side = "bottom")
 
-        self.content_frame = tk.Frame(self, bg = "black", height = 300)
-        self.status_frame.pack (expand = True, fill = "both")
+def open_music():
+            history.append(music)
+def open_games():
+            history.append(games)
+def open_settings():
+            history.append(settings)
 
-        self.main_menu = MainMenu(self.content_frame, self)
+menu = tk.Listbox(content_frame,
+                font = ("georgia", 14),
+                highlightcolor = "blue",
+                fg = "gray")
+menu.pack(side = "left", fill = "both")
+
+
+history = []
+
+musicoptions = [ ("All Songs", open_songs),
+                   ("Playlists", open_playlists),
+                   ("Search", open_search),
+                   ("Local Files", open_localfiles),
+                   ("Back", history.pop)]
+
+mainoptions = [ ("Music", open_music),
+                   ("Games", open_games),
+                   ("open_settings", open_settings)]
+
+history = [mainoptions]
+currentmenu = history[-1]
+
+root.mainloop()
+
+for index, item in enumerate (currentmenu):
+     menu.insert(index, item[0])
+if select.is_pressed():
+     selection = menu.curselection()[0]
+     menu.delete(0, tk.END)
+     (currentmenu[selection])[1]()
+
+     
+          
+
+class Mainmenu(tk.Frame):
+    def __init__(self, parent):
+        super().__init__(parent)
+
+        self.menu = tk.Listbox(self,
+                               font = ("georgia", 14),
+                               highlightcolor = "blue",
+                               fg = "gray")
+        options = [ ("Music", open_music),
+                   ("Games", open_games),
+                   ("open_settings", open_settings)]
+        for index, item in enumerate(options):
+            self.menu.insert(index+1, item[0])
+
+        selectedindex = self.menu.curselection()
+        if selectedindex != ():
+            (options(selectedindex))(1)()
+        self.pack(expand=True, side = "bottom")
+        main_menu = Mainmenu(content_frame)
+
 
 class music(tk.Frame):
     def __init__(self, parent):
         super().__init__(parent, bg = "black")
-        self.menu = tk.Listbox
-        (
+        self.menu = tk.Listbox(
             self, 
-            font = ("georgia", 14)
+            font = ("georgia", 14),
             highlightcolor = "blue",
             fg = "gray"
         )
@@ -34,28 +93,58 @@ class music(tk.Frame):
                    ("Local Files", open_localfiles)
                    ("Back", go_back)]
         for index, item in enumerate(options):
-            self.menu.insert(index+1, item)
+            self.menu.insert(index+1, item[0])
         if select == True:
-            index = self.menu.curseselection()
-        for ind in options:
-            if ind == index:
-                options(ind(1))()
+            selectedindex = self.menu.curseselection()
+            if selectedindex != ():
+                options[selectedindex][1]()
+        self.music.pack(expand = True)
+        
 
 class settings (tk.Frame):
     def __init__(self, parent):
         super().__init__(parent, bg = "black")
-        self.menu = tk.Listbox                    
-            
+        self.menu = tk.Listbox(
+            self,
+            font = ("georgia", 14),
+            highlightcolor = "green",
+            fg = "gray"
+        )
+        options = [ ("Brightness", change_brightness)
+                   ("Volume", change_volume)]
+        for index, item in enumerate(options):
+            self.menu.insert(index+1, item[0])
+        if select == True:
+            selectedindex = self.menu.curseselection()
+            if selectedindex != ():
+                options[selectedindex][1]()
+        self.music.pack(expand = True)
 
-       
-class Mainmenu(tk.Frame):
+
+class games (tk.Frame):
     def __init__(self, parent):
-        super().__init__(parent)
+        super().__init(parent, bg = "black")
+        self.menu = tk.Listbox(
+            self,
+            font = ("georgia", 14),
+            highlightcolor = "pruple",
+            fg = "gray"
+        )
+        options = [ ("PS1", openps),
+                   ("SNES", opensnes),
+                   ("DOOM2", rundoom)]
+        for index, item in enumerate(options):
+            self.menu.insert(index+1, item[0])
+        if select == True:
+            selectedindex = self.menu.curselection()
+            if selectedindex != ():
+                options[selectedindex][1]()
+        self.music.pack(expand = True)
 
-        def open_music(self):
-            music.tkraise()
-            history.append(open_music)
-        def open_games(self):
-            games.tkraise()
-        def open_settings(self):
-            settings.tkraise()
+history = [Mainmenu]
+
+root.mainloop()
+
+
+                                
+       
