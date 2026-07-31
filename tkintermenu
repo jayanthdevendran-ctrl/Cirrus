@@ -36,3 +36,14 @@ def draw_menus(menu, selected_index):
 
 
 root.mainloop()
+
+
+musicoptions = [ ("All Songs", open_songs),
+                   ("Playlists", open_playlists),
+                   ("Search", open_search),
+                   ("Local Files", open_localfiles),
+                   ("Back", history.pop)]
+
+mainoptions = [ ("Music", open_music),
+                   ("Games", open_games),
+                   ("open_settings", open_settings)]
