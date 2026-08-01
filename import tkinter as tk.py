@@ -16,18 +16,22 @@ pygame.init()
 screen = pygame.display.set_mode((480, 360), pygame.FULLSCREEN)
 running = True
 
-main = ["music", "games", "Settings", "quit"]
-history = [main]
 
 def goback():
     history.pop()
 
-menus = { "Main":{"Music" : {
+menus = { "Main": 
+    {
+    "Music": "Music",
+    "Games" : "Games",
+    "Settings" : "Settings"
+    },
+    "Music" : {
     "Liked Songs": openlikedsongs,
     "Playlists": openplaylists,
     "Search": opensearch,
     "Back": goback,
-},
+    },
 
 "Games" : {
     "Doom": runDOOM,
@@ -40,8 +44,8 @@ menus = { "Main":{"Music" : {
     "Backlight": backlight,
     "Back": goback
 }}
-}
 
+history = ["Main"]
 currentmenu = history[-1]
 currentoptions = menus[currentmenu].keys()
 def clearscreen():
@@ -50,13 +54,18 @@ def clearscreen():
 
 def draw_menu():
     global currentmenu
+    global currentoptions
     currentmenu = history[-1]
+    currentoptions = list(menus[currentmenu].keys())
     screen.fill(background)
     pygame.draw.rect(screen, (40, 40, 40), (2, 0, 240, 320))
     for index, item in enumerate(currentoptions):
-        entryrects = pygame.Rect(2, index * 30, 240, 10)
-        pygame.rect(screen, (40, 40, 40), entryrects)
-        text = font.render(item, True, ("255, 255, 255"))
+        entryrects = pygame.Rect(2, index * 30, 240, 30)
+        if index == selected:
+            pygame.draw.rect(screen, (80, 80, 80), entryrects)
+        else:
+            pygame.draw.rect(screen, (40, 40, 40), entryrects)
+        text = font.render(item, True, (255, 255, 255))
         screen.blit(text, (entryrects.x + 2, entryrects.y + 2 ) )
 
 selected = 0
@@ -67,12 +76,15 @@ while running:
             running = False
     draw_menu()
     if select.is_pressed:
+        selected = 0
         choice = currentoptions[selected]
-        history.append[choice]
-    if down.is_pressed:
+        history.append(choice)
+    if down.wait_for_press(timeout=0) and selected < len(currentoptions)-1:
         selected += 1
-    if up.is_pressed:
+        down.wait_for_release()
+    if up.wait_for_press(timeout=0) and selected > 0:
         selected -= 1
+        up.wait_for_release()
 
 
 
