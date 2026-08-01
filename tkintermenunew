@@ -1,7 +1,6 @@
 import tkinter as tk
 import subprocess
 import time
-from gpiozero import Button
 
 select = Button(19, bounce_time=0.05)
 root = tk.Tk()
