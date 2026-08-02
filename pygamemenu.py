@@ -12,10 +12,8 @@ clock=pygame.time.Clock()
 background = (30, 30, 30)
 font = pygame.font.SysFont("Helvetica", 26)
 
-pygame.init()
 screen = pygame.display.set_mode((480, 360), pygame.FULLSCREEN)
 running = True
-
 
 def goback():
     history.pop()
@@ -47,7 +45,8 @@ menus = { "Main":
 
 history = ["Main"]
 currentmenu = history[-1]
-currentoptions = menus[currentmenu].keys()
+currentoptions = list(menus[currentmenu].keys())
+
 def clearscreen():
     screen.fill((240,240,240))
     pygame.draw.rect(screen, (30, 30, 30), (0,0,480,30))
@@ -58,7 +57,7 @@ def draw_menu():
     currentmenu = history[-1]
     currentoptions = list(menus[currentmenu].keys())
     screen.fill(background)
-    pygame.draw.rect(screen, (40, 40, 40), (2, 0, 240, 320))
+    pygame.draw.rect(screen, (40, 40, 40), (2, 0, 240, 360))
     for index, item in enumerate(currentoptions):
         entryrects = pygame.Rect(2, index * 30, 240, 30)
         if index == selected:
@@ -75,18 +74,22 @@ while running:
         if event.type == pygame.QUIT:
             running = False
     draw_menu()
-    if select.is_pressed:
+    if select.wait_for_press(timeout=0):
         selected = 0
         choice = currentoptions[selected]
-        history.append(choice)
+        action = menus[currentmenu][choice]
+        if isinstance (action, str):
+            history.append(choice)
+        else:
+            action()
+        select.wait_for_release()
     if down.wait_for_press(timeout=0) and selected < len(currentoptions)-1:
         selected += 1
         down.wait_for_release()
     if up.wait_for_press(timeout=0) and selected > 0:
         selected -= 1
         up.wait_for_release()
+    pygame.display.flip()
+    clock.tick(60)
 
 
-
-pygame.display.flip()
-clock.tick(60)
