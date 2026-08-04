@@ -1,12 +1,12 @@
 from gpiozero import Button
+import os
+import subprocess
+
 import pygame
 pygame.init()
-
-up = Button(5)
-down = Button(17)
-left = Button(23)
-right = Button(25)
-select = Button(21)
+up = Button(26)
+down = Button(6)
+select = Button(5)
 clock=pygame.time.Clock()
 
 background = (30, 30, 30)
@@ -17,12 +17,37 @@ running = True
 
 def goback():
     history.pop()
+    
+
+def openlikedsongs():
+    print
+def openplaylists():
+    print
+def opensearch():
+    print
+def openlocal():
+    print
+def opengames():
+    print
+def runDOOM():
+    print
+def runPSGAME():
+    print
+def runGAMEBOY():
+    print
+def poweroff():
+    subprocess.run(["sudo", "poweroff"])
+def backlight():
+    print
+def volume():
+    print
 
 menus = { "Main": 
     {
     "Music": "Music",
     "Games" : "Games",
-    "Settings" : "Settings"
+    "Settings" : "Settings",
+    "Power Off" : poweroff
     },
     "Music" : {
     "Liked Songs": openlikedsongs,
@@ -75,13 +100,13 @@ while running:
             running = False
     draw_menu()
     if select.wait_for_press(timeout=0):
-        selected = 0
         choice = currentoptions[selected]
         action = menus[currentmenu][choice]
         if isinstance (action, str):
             history.append(choice)
         else:
             action()
+        selected = 0
         select.wait_for_release()
     if down.wait_for_press(timeout=0) and selected < len(currentoptions)-1:
         selected += 1
