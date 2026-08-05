@@ -1,6 +1,8 @@
 from gpiozero import Button
 import os
 import subprocess
+import time
+import picamera2
 
 import pygame
 pygame.init()
@@ -14,11 +16,10 @@ font = pygame.font.SysFont("Helvetica", 26)
 
 screen = pygame.display.set_mode((480, 360), pygame.FULLSCREEN)
 running = True
+pygame.mouse.set_visible(False)
 
 def goback():
     history.pop()
-    
-
 def openlikedsongs():
     print
 def openplaylists():
@@ -30,11 +31,27 @@ def openlocal():
 def opengames():
     print
 def runDOOM():
-    print
+    global font
+    global clock
+    global screen
+    global running
+    doomrunning = subprocess.Popen(["chocolate-doom"])
+    pygame.mouse.set_visible(False)
+    select.wait_for_release()
+    select.wait_for_press()
+
+    doomrunning.kill()
+    doomrunning.wait()
+    time.sleep(0.5)
+
+    select.wait_for_release()
+
+    pygame.mouse.set_visible(False)
+
 def runPSGAME():
-    print
+    print ("running psgame")
 def runGAMEBOY():
-    print
+    print 
 def poweroff():
     subprocess.run(["sudo", "poweroff"])
 def backlight():
@@ -42,12 +59,27 @@ def backlight():
 def volume():
     print
 
+def opencam():
+    print("opened camera")
+    select.wait_for_release()
+    cam = picamera2()
+    cam.preview_configuration.main.size = (480, 320)
+    cam.preview_configuration.main.format = "BGR888"
+    cam.configured("preview")
+    cam.start()
+    while True:
+        array = cam.capture_array()
+        img = pygame.image.frombuffer(array.data, (480, 320), "RGB")
+        screen.blit(img, (0,0))
+
+
 menus = { "Main": 
     {
     "Music": "Music",
     "Games" : "Games",
     "Settings" : "Settings",
-    "Power Off" : poweroff
+    "Power Off" : poweroff,
+    "Camera" : opencam
     },
     "Music" : {
     "Liked Songs": openlikedsongs,
@@ -89,7 +121,7 @@ def draw_menu():
             pygame.draw.rect(screen, (80, 80, 80), entryrects)
         else:
             pygame.draw.rect(screen, (40, 40, 40), entryrects)
-        text = font.render(item, True, (255, 255, 255))
+        text = font.render(item, False, (255, 255, 255))
         screen.blit(text, (entryrects.x + 2, entryrects.y + 2 ) )
 
 selected = 0
