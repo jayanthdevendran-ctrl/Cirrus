@@ -2,7 +2,8 @@ from gpiozero import Button
 import os
 import subprocess
 import time
-import picamera2
+from picamera2 import Picamera2
+from datetime import datetime
 
 import pygame
 pygame.init()
@@ -62,15 +63,42 @@ def volume():
 def opencam():
     print("opened camera")
     select.wait_for_release()
-    cam = picamera2()
+    cam = Picamera2()
     cam.preview_configuration.main.size = (480, 320)
     cam.preview_configuration.main.format = "BGR888"
-    cam.configured("preview")
+    picconfig = cam.create_still_configuration(main = {"size": (2592, 1944)})
+    cam.configure("preview")
     cam.start()
+    cam.set_controls({"Saturation": 1.3, "Contrast" : 1.2, "Sharpness" : 1.4, "NoiseReductionMode":0, "ExposureValue": 0.5})
+
     while True:
         array = cam.capture_array()
         img = pygame.image.frombuffer(array.data, (480, 320), "RGB")
         screen.blit(img, (0,0))
+        pygame.display.flip()
+        if select.is_pressed:
+            select.wait_for_release()
+            break
+        if down.is_pressed:
+            down.wait_for_release()
+            timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+            filename = f"/home/cirrus/images/{timestamp}.jpg" 
+            cam.stop()
+        
+            cam.configure(picconfig) 
+            cam.start()          
+            cam.capture_file(filename)
+            pic = pygame.image.load(filename)
+            pic = pygame.transform.scale(pic, (480, 320))
+            screen.blit(pic, (0,0))
+            pygame.display.flip()
+            pygame.time.wait(5000)
+            clock.tick(30)
+            cam.stop()
+            
+            cam.configure("preview")
+            cam.start()
+    cam.stop()
 
 
 menus = { "Main": 
@@ -78,8 +106,8 @@ menus = { "Main":
     "Music": "Music",
     "Games" : "Games",
     "Settings" : "Settings",
-    "Power Off" : poweroff,
-    "Camera" : opencam
+    "Camera" : opencam,
+    "Power Off" : poweroff
     },
     "Music" : {
     "Liked Songs": openlikedsongs,
