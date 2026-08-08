@@ -1,10 +1,44 @@
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
 
+scope = (
+    "user-read-playback-state "
+    "user-modify-playback-state "
+    "user-read-playback-state "
+    "playlist-read-private "
+    "user-library-modify "
+    "user-library-read "
+)
+
 sp = spotipy.Spotify(
     auth_manager = SpotifyOAuth(
-        client_id = "id",
-
-    
+        scope = scope
     )
 )
+
+export SPOTIPY_CLIENT_ID = "myid" 
+export SPOTIPY_CLIENT_SECRET
+
+liked_songs = {}
+def liked_songs():
+    results = sp.current_user_saved_tracks()
+    for item in results["items"]:
+        song = item["track"]
+        cover_url = song["album"]["images"][0]["url"]
+        liked_songs[song["name"]] = [song["artist"][0]["name"], song["uri"], cover_url]
+
+userplaylists = []
+def playlists():
+    playlists = sp.current_user_playlists()
+    for pl in playlists["items"]:
+        userplaylists[pl["name"]] = pl["id"]
+
+def currentlyplaying():
+    playback = sp.current_playback()
+    for song in playback["item"]:
+        title = song["name"]
+        artist = song["artists"]["name"][0]
+        duration = song["duration_ms"]
+        timestamp = playback["timestamp"]
+
+
