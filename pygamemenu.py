@@ -1,15 +1,20 @@
 from gpiozero import Button
+from gpiozero import PWMLED
 import os
 import subprocess
 import time
 from picamera2 import Picamera2
 from datetime import datetime
+from PIL import Image, ImageEnhance, ImageFilter
 
 import pygame
 pygame.init()
 up = Button(26)
 down = Button(6)
 select = Button(5)
+
+
+
 clock=pygame.time.Clock()
 
 background = (30, 30, 30)
@@ -21,42 +26,96 @@ pygame.mouse.set_visible(False)
 
 def goback():
     history.pop()
+
 def openlikedsongs():
     print
+
 def openplaylists():
     print
+
 def opensearch():
     print
+
 def openlocal():
     print
+
 def opengames():
     print
+
 def runDOOM():
+    
     global font
     global clock
     global screen
     global running
+    select.wait_for_release()
     doomrunning = subprocess.Popen(["chocolate-doom"])
     pygame.mouse.set_visible(False)
-    select.wait_for_release()
     select.wait_for_press()
 
-    doomrunning.kill()
+    doomrunning.terminate()
     doomrunning.wait()
     time.sleep(0.5)
 
-    select.wait_for_release()
+    pygame.display.quit()
+    pygame.display.init()
 
+    screen = pygame.display.set_mode((480, 360), pygame.FULLSCREEN)
     pygame.mouse.set_visible(False)
+    font = pygame.font.SysFont("Helvetica", 26)
+    clock = pygame.time.Clock()
+
 
 def runPSGAME():
     print ("running psgame")
+
 def runGAMEBOY():
-    print 
+    print
+
 def poweroff():
     subprocess.run(["sudo", "poweroff"])
+
+
 def backlight():
-    print
+    global backlightvalue
+    select.wait_for_release()
+    pygame.draw.rect(screen, (40, 40, 40), (2, 0, 240, 360))
+
+    text = font.render("Brightness", False, (255, 255, 255))
+    screen.blit(text, (2, 2))
+
+    while True:
+
+        if down.wait_for_press(timeout=0):
+            backlightvalue = max(0, backlightvalue - 0.1)
+            down.wait_for_release()
+
+        if up.wait_for_press(timeout=0):
+            backlightvalue = min(1, backlightvalue + 0.1)
+            up.wait_for_release()
+
+        pygame.draw.rect(
+            screen,
+            (0, 0, 0),
+            (2, 40, 220, 16)
+        )
+
+        pygame.draw.rect(
+            screen,
+            (60, 60, 60),
+            (3, 42, int(220 * backlightvalue), 12)
+        )
+
+
+        pygame.display.flip()
+
+        if select.is_pressed:
+            select.wait_for_release()
+            return
+
+        clock.tick(60)
+
+
 def volume():
     print
 
@@ -69,7 +128,7 @@ def opencam():
     picconfig = cam.create_still_configuration(main = {"size": (2592, 1944)})
     cam.configure("preview")
     cam.start()
-    cam.set_controls({"Saturation": 1.3, "Contrast" : 1.2, "Sharpness" : 1.4, "NoiseReductionMode":0, "ExposureValue": 0.5})
+    cam.set_controls({"Saturation": 1.05, "Contrast" : 1.05, "Sharpness" : 1.05, "NoiseReductionMode":1, "ExposureValue": 0.7})
 
     while True:
         array = cam.capture_array()
@@ -88,12 +147,20 @@ def opencam():
             cam.configure(picconfig) 
             cam.start()          
             cam.capture_file(filename)
+
+            img = Image.open(filename)
+            img = ImageEnhance.Color(img).enhance(1.1)
+            img = ImageEnhance.Contrast(img).enhance(1.05)
+            img = ImageEnhance.Sharpness(img).enhance(1.05)
+            img = img.filter(ImageFilter.GaussianBlur(0.45))
+            img.save(filename, quality=82)
+
             pic = pygame.image.load(filename)
             pic = pygame.transform.scale(pic, (480, 320))
             screen.blit(pic, (0,0))
             pygame.display.flip()
             pygame.time.wait(5000)
-            clock.tick(30)
+            clock.tick(60)
             cam.stop()
             
             cam.configure("preview")
@@ -101,31 +168,31 @@ def opencam():
     cam.stop()
 
 
-menus = { "Main": 
-    {
-    "Music": "Music",
-    "Games" : "Games",
-    "Settings" : "Settings",
-    "Camera" : opencam,
-    "Power Off" : poweroff
-    },
-    "Music" : {
-    "Liked Songs": openlikedsongs,
-    "Playlists": openplaylists,
-    "Search": opensearch,
-    "Back": goback,
-    },
+menus = { "Main":
+{
+"Music": "Music",
+"Games" : "Games",
+"Settings" : "Settings",
+"Camera" : opencam,
+"Power Off" : poweroff
+},
+"Music" : {
+"Liked Songs": openlikedsongs,
+"Playlists": openplaylists,
+"Search": opensearch,
+"Back": goback,
+},
 
 "Games" : {
-    "Doom": runDOOM,
-    "PS1": runPSGAME,
-    "Back": goback
+"Doom": runDOOM,
+"PS1": runPSGAME,
+"Back": goback
 },
 
 "Settings" : {
-    "Volume": volume,
-    "Backlight": backlight,
-    "Back": goback
+"Volume": volume,
+"Backlight": backlight,
+"Back": goback
 }}
 
 history = ["Main"]
@@ -158,7 +225,9 @@ while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
+
     draw_menu()
+
     if select.wait_for_press(timeout=0):
         choice = currentoptions[selected]
         action = menus[currentmenu][choice]
@@ -168,13 +237,14 @@ while running:
             action()
         selected = 0
         select.wait_for_release()
+
     if down.wait_for_press(timeout=0) and selected < len(currentoptions)-1:
         selected += 1
         down.wait_for_release()
+
     if up.wait_for_press(timeout=0) and selected > 0:
         selected -= 1
         up.wait_for_release()
+
     pygame.display.flip()
     clock.tick(60)
-
-
