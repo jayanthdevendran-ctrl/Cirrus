@@ -19,13 +19,14 @@ sp = spotipy.Spotify(
 export SPOTIPY_CLIENT_ID = "myid" 
 export SPOTIPY_CLIENT_SECRET
 
-liked_songs = {}
+lsongs = {}
 def liked_songs():
     results = sp.current_user_saved_tracks()
     for item in results["items"]:
         song = item["track"]
         cover_url = song["album"]["images"][0]["url"]
-        liked_songs[song["name"]] = [song["artist"][0]["name"], song["uri"], cover_url]
+        lsongs[song["name"]] = [song["artists"][0]["name"], song["uri"], cover_url]
+    return liked_songs
 
 userplaylists = []
 def playlists():
@@ -33,6 +34,7 @@ def playlists():
     for pl in playlists["items"]:
         userplaylists[pl["name"]] = pl["id"]
 
+currentsong = {}
 def currentlyplaying():
     playback = sp.current_playback()
     for song in playback["item"]:
@@ -40,5 +42,8 @@ def currentlyplaying():
         artist = song["artists"]["name"][0]
         duration = song["duration_ms"]
         timestamp = playback["timestamp"]
+        cover_url = song["album"]["images"][0]["url"]
+        currentsong[title] = [artist, duration, timestamp, cover_url]
+        return currentsong
 
 

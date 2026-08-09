@@ -6,14 +6,23 @@ import time
 from picamera2 import Picamera2
 from datetime import datetime
 from PIL import Image, ImageEnhance, ImageFilter
+import spotfunctions as sf
+import spotipy as sp
+import requests
+from io import BytesIO
 
 import pygame
 pygame.init()
 up = Button(26)
 down = Button(6)
+left = Button(1)
+right = Button(2)
+action1 = Button(3)
+action2 = Button(4)
+action3 = Button (6)
+action4 = Button(7)
 select = Button(5)
-
-
+back = Button(8)
 
 clock=pygame.time.Clock()
 
@@ -27,8 +36,60 @@ pygame.mouse.set_visible(False)
 def goback():
     history.pop()
 
+currently_playing = False
+song_loaded = False
 def openlikedsongs():
-    print
+    global currently_playing
+    global song_loaded 
+    likedsongs = sf.liked_songs() 
+    selected = 0
+
+    currentmenu = likedsongs
+    currentoptions = list(menus[currentmenu].keys())
+    while True:
+        draw_menu()
+        if select.wait_for_press(timeout=0):
+            choice = currentoptions[selected]
+            url = likedsongs[choice][1]
+            sp.start_playback(uris = [url])
+            select.wait_for_release()
+            currently_playing = True
+            song_loaded = True
+
+        if down.wait_for_press(timeout=0) and selected < len(currentoptions)-1:
+            selected += 1
+            down.wait_for_release()
+
+        if up.wait_for_press(timeout=0) and selected > 0:
+            selected -= 1
+            up.wait_for_release()
+        if back.wait_for_press(timeout = 0):
+            back.wait_for_release()
+            return
+
+        if action4.wait_for_press(timeout = 0):
+            sp.pause_playback()
+            currently_playing = False
+            action4.wait_for_release()
+
+        if action2.wait_for_press(timeout = 0):
+            playback = sp.current_playback()
+            if playback:
+                current_position = playback["progress_ms"]
+                new_position = max(0, current_position - 15000)
+                sp.seek_track(new_position)
+            action2.wait_for_release()
+
+        if action3.wait_for_press(timeout = 0):
+            playback = sp.current_playback()
+            if playback:
+                current_position = playback["progress_ms"]
+                newposition = playback["progress_ms"] + 15000
+                sp.seek_track(new_position)
+            action3.wait_for_release(newposition)
+
+        pygame.display.flip()
+        clock.tick(60)
 
 def openplaylists():
     print
@@ -219,6 +280,31 @@ def draw_menu():
         text = font.render(item, False, (255, 255, 255))
         screen.blit(text, (entryrects.x + 2, entryrects.y + 2 ) )
 
+def draw_currently_playing():
+    cs = sp.current_playback()
+    track = cs["item"]["name"]
+    artist = cs["item"]["artists"][0]["name"]
+    position = cs["progress_ms"]
+    length = cs["item"]["duration_ms"]
+    cp = cs["is_playing"]
+    coverurl = cs["item"]["album"]["images"]["0"]["url"]
+    response = requests.get(coverurl)
+    cover = pygame.image.load(BytesIO(response.content))
+    covertf = pygame.transform.scale(cover, (120, 120))
+    screen.blit(covertf, (340, 150))
+    songtext = font.render(track.title(), False, (255, 255, 255))
+    artisttext = font.render(artist.title(), False, (230, 230, 230))
+    bar = pygame.Rect(300, 120, 200*(position/length), 5)
+    pygame.draw.rect(screen, (255, 255, 255), bar)
+    screen.blit(songtext, (bar.x, bar.y + 10))
+    screen.blit(artisttext, (bar.x, bar.y + 5))
+    playimage = pygame.image.load("play.png")
+    pauseimage = pygame.image.load("pause.png")
+    if cp:
+        screen.blit(pauseimage, (340, 200))
+    else:
+        screen.blit(playimage, (240, 200))
+
 selected = 0
 
 while running:
@@ -230,7 +316,7 @@ while running:
 
     if select.wait_for_press(timeout=0):
         choice = currentoptions[selected]
-        action = menus[currentmenu][choice]
+        action = menus[currentmenu][choice][0]
         if isinstance (action, str):
             history.append(choice)
         else:
@@ -248,3 +334,4 @@ while running:
 
     pygame.display.flip()
     clock.tick(60)
+
