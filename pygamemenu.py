@@ -7,9 +7,25 @@ from picamera2 import Picamera2
 from datetime import datetime
 from PIL import Image, ImageEnhance, ImageFilter
 import spotfunctions as sf
-import spotipy as sp
 import requests
 from io import BytesIO
+import spotipy
+from spotipy.oauth2 import SpotifyOAuth
+
+scope = (
+    "user-read-playback-state "
+    "user-modify-playback-state "
+    "user-read-playback-state "
+    "playlist-read-private "
+    "user-library-modify "
+    "user-library-read "
+)
+
+sp = spotipy.Spotify(
+    auth_manager = SpotifyOAuth(
+        scope = scope
+    )
+)
 
 import pygame
 pygame.init()
@@ -19,7 +35,7 @@ left = Button(1)
 right = Button(2)
 action1 = Button(3)
 action2 = Button(4)
-action3 = Button (6)
+action3 = Button (9)
 action4 = Button(7)
 select = Button(5)
 back = Button(8)
@@ -38,61 +54,118 @@ def goback():
 
 currently_playing = False
 song_loaded = False
+
+visible_songs = 8
 def openlikedsongs():
-    global currently_playing
-    global song_loaded 
-    likedsongs = sf.liked_songs() 
+    global songlist
+    songlist = sf.liked_songs()
+    currentoptions = list(songlist.keys())
+    scrolloffset = 0
     selected = 0
-
-    currentmenu = likedsongs
-    currentoptions = list(menus[currentmenu].keys())
     while True:
-        draw_menu()
-        if select.wait_for_press(timeout=0):
-            choice = currentoptions[selected]
-            url = likedsongs[choice][1]
-            sp.start_playback(uris = [url])
+        if selected< scrolloffset:
+            scrolloffset = selected
+        if selected >= scrolloffset + visible_songs:
+            scrolloffset = selected - visible_songs + 1
+        screen.fill(background)
+        pygame.draw.rect(screen, (40,40,40), (2,0,300,360))
+        for item in range(scrolloffset, min(scrolloffset + visible_songs, len(currentoptions))):
+            song = currentoptions[item]
+            y = (item - scrolloffset) * 40
+            if item == selected:
+                pygame.draw.rect(screen, (80,80,80), (5, y, 290, 38))
+            text = font.render(song, True, (255, 255, 255))
+            screen.blit(text, (15, y+5))
+        pygame.display.flip()
+
+        if up.is_pressed:
+            if selected>0:
+                selected -= 1
+            time.sleep(0.15)
+        if down.is_pressed:
+            if selected < len(currentoptions) - 1:
+                selected += 1
+            time.sleep(0.15)
+        if select.is_pressed:
+            song = currentoptions[selected]
+            global coverurl
+            global response
+            global queue
+            uri = songlist[song][1]
+            sp.start_playback(uris=[uri])
+            queue = songlist[song, len(songlist)]
+            coverurl = cs["item"]["album"]["images"][0]["url"]
+            response = requests.get(coverurl)
             select.wait_for_release()
-            currently_playing = True
-            song_loaded = True
-
-        if down.wait_for_press(timeout=0) and selected < len(currentoptions)-1:
-            selected += 1
-            down.wait_for_release()
-
-        if up.wait_for_press(timeout=0) and selected > 0:
-            selected -= 1
-            up.wait_for_release()
-        if back.wait_for_press(timeout = 0):
+        if back.is_pressed:
             back.wait_for_release()
             return
-
-        if action4.wait_for_press(timeout = 0):
-            sp.pause_playback()
-            currently_playing = False
-            action4.wait_for_release()
-
-        if action2.wait_for_press(timeout = 0):
-            playback = sp.current_playback()
-            if playback:
-                current_position = playback["progress_ms"]
-                new_position = max(0, current_position - 15000)
-                sp.seek_track(new_position)
-            action2.wait_for_release()
-
-        if action3.wait_for_press(timeout = 0):
-            playback = sp.current_playback()
-            if playback:
-                current_position = playback["progress_ms"]
-                newposition = playback["progress_ms"] + 15000
-                sp.seek_track(new_position)
-            action3.wait_for_release(newposition)
-
-        pygame.display.flip()
         clock.tick(60)
 
+for song in queue:
+    if position>= length-500:
+        uri = songlist[song][1]
+        sp.start_playback(uris = [uri])
+
 def openplaylists():
-    print
+    global currently_playing
+    global song_loaded 
+    playlists = sf.playlists() 
+    selected = 0
+    currentoptions = list(playlists.keys())
+    while True:
+            screen.fill(background)
+            pygame.draw.rect(screen, (40, 40, 40), (2, 0, 240, 360))
+            for index, item in enumerate(currentoptions):
+                entryrects = pygame.Rect(2, index * 30, 240, 30)
+                if index == selected:
+                    pygame.draw.rect(screen, (80, 80, 80), entryrects)
+                else:
+                    pygame.draw.rect(screen, (40, 40, 40), entryrects)
+                text = font.render(item, False, (255, 255, 255))
+                screen.blit(text, (entryrects.x + 2, entryrects.y + 2 ) )
+            draw_menu()
+
+            if select.wait_for_press(timeout=0):
+                playlist_name = currentoptions[selected]
+                playlist_id = playlists[playlist_name]
+                select.wait_for_release()
+                sf.openplaylist(playlist_id)
+    
+            if down.wait_for_press(timeout=0) and selected < len(currentoptions)-1:
+                selected += 1
+                down.wait_for_release()
+    
+            if up.wait_for_press(timeout=0) and selected > 0:
+                selected -= 1
+                up.wait_for_release()
+                
+            if back.wait_for_press(timeout = 0):
+                back.wait_for_release()
+                return
+    
+            if action4.wait_for_press(timeout = 0):
+                sp.pause_playback()
+                currently_playing = False
+                action4.wait_for_release()
+    
+            if action2.wait_for_press(timeout = 0):
+                playback = sp.current_playback()
+                if playback:
+                    current_position = playback["progress_ms"]
+                    new_position = max(0, current_position - 15000)
+                    sp.seek_track(new_position)
+                action2.wait_for_release()
+    
+            if action3.wait_for_press(timeout = 0):
+                playback = sp.current_playback()
+                if playback:
+                    current_position = playback["progress_ms"]
+                    new_position = playback["progress_ms"] + 15000
+                    sp.seek_track(new_position)
+                action3.wait_for_release()
+    
+            pygame.display.flip
 
 def opensearch():
     print
@@ -193,7 +266,7 @@ def opencam():
 
     while True:
         array = cam.capture_array()
-        img = pygame.image.frombuffer(array.data, (480, 320), "RGB")
+        img = pygame.image.frombuffer(array.data, (480, 320), "BGR")
         screen.blit(img, (0,0))
         pygame.display.flip()
         if select.is_pressed:
@@ -281,42 +354,42 @@ def draw_menu():
         screen.blit(text, (entryrects.x + 2, entryrects.y + 2 ) )
 
 def draw_currently_playing():
+    global cs
     cs = sp.current_playback()
-    track = cs["item"]["name"]
-    artist = cs["item"]["artists"][0]["name"]
-    position = cs["progress_ms"]
-    length = cs["item"]["duration_ms"]
-    cp = cs["is_playing"]
-    coverurl = cs["item"]["album"]["images"]["0"]["url"]
-    response = requests.get(coverurl)
-    cover = pygame.image.load(BytesIO(response.content))
-    covertf = pygame.transform.scale(cover, (120, 120))
-    screen.blit(covertf, (340, 150))
-    songtext = font.render(track.title(), False, (255, 255, 255))
-    artisttext = font.render(artist.title(), False, (230, 230, 230))
-    bar = pygame.Rect(300, 120, 200*(position/length), 5)
-    pygame.draw.rect(screen, (255, 255, 255), bar)
-    screen.blit(songtext, (bar.x, bar.y + 10))
-    screen.blit(artisttext, (bar.x, bar.y + 5))
-    playimage = pygame.image.load("play.png")
-    pauseimage = pygame.image.load("pause.png")
-    if cp:
-        screen.blit(pauseimage, (340, 200))
-    else:
-        screen.blit(playimage, (240, 200))
+    global position
+    global length
+    if cs:
+        track = cs["item"]["name"]
+        artist = cs["item"]["artists"][0]["name"]
+        position = cs["progress_ms"]
+        length = cs["item"]["duration_ms"]
+        cp = cs["is_playing"]
+        cover = pygame.image.load(BytesIO(response.content))
+        covertf = pygame.transform.scale(cover, (120, 120))
+        screen.blit(covertf, (340, 150))
+        songtext = font.render(track.title(), False, (255, 255, 255))
+        artisttext = font.render(artist.title(), False, (230, 230, 230))
+        bar = pygame.Rect(300, 120, 200*(position/length), 5)
+        pygame.draw.rect(screen, (255, 255, 255), bar)
+        screen.blit(songtext, (bar.x, bar.y + 10))
+        screen.blit(artisttext, (bar.x, bar.y + 5))
+        playimage = pygame.image.load("play.png")
+        pauseimage = pygame.image.load("pause.png")
+        if cp:
+            screen.blit(pauseimage, (340, 200))
+        else:
+            screen.blit(playimage, (240, 200))
 
 selected = 0
 
 while running:
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            running = False
 
     draw_menu()
+    draw_currently_playing()
 
     if select.wait_for_press(timeout=0):
         choice = currentoptions[selected]
-        action = menus[currentmenu][choice][0]
+        action = menus[currentmenu][choice]
         if isinstance (action, str):
             history.append(choice)
         else:
