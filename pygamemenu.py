@@ -90,22 +90,18 @@ def openlikedsongs():
             song = currentoptions[selected]
             global coverurl
             global response
-            global queue
             uri = songlist[song][1]
             sp.start_playback(uris=[uri])
-            queue = songlist[song, len(songlist)]
-            coverurl = cs["item"]["album"]["images"][0]["url"]
-            response = requests.get(coverurl)
+            for i in range(selected+1, len(currentoptions)):
+                next_song = currentoptions[i]
+                next_uri = songlist[next_song][1]
+                sp.add_to_queue(next_uri)
             select.wait_for_release()
         if back.is_pressed:
             back.wait_for_release()
             return
         clock.tick(60)
 
-for song in queue:
-    if position>= length-500:
-        uri = songlist[song][1]
-        sp.start_playback(uris = [uri])
 
 def openplaylists():
     global currently_playing
@@ -130,7 +126,8 @@ def openplaylists():
                 playlist_name = currentoptions[selected]
                 playlist_id = playlists[playlist_name]
                 select.wait_for_release()
-                sf.openplaylist(playlist_id)
+                songs = sf.openplaylist(playlist_id)
+                currentoptions = list(songs.keys)
     
             if down.wait_for_press(timeout=0) and selected < len(currentoptions)-1:
                 selected += 1

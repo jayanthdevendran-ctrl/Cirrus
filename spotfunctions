@@ -19,8 +19,8 @@ sp = spotipy.Spotify(
 export SPOTIPY_CLIENT_ID = "myid" 
 export SPOTIPY_CLIENT_SECRET
 
-lsongs = {}
 def liked_songs():
+    lsongs = {}
     results = sp.current_user_saved_tracks()
     for item in results["items"]:
         song = item["track"]
@@ -33,6 +33,7 @@ def playlists():
     results = sp.current_user_playlists()
     for pl in results["items"]:
         userplaylists[pl["name"]] = pl["id"]
+    return userplaylists
 
 def openplaylist(playlist_id):
     results = sp.playlists_tracks(playlist_id)
