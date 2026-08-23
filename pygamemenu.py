@@ -350,12 +350,21 @@ def draw_menu():
         text = font.render(item, False, (255, 255, 255))
         screen.blit(text, (entryrects.x + 2, entryrects.y + 2 ) )
 
+def getcover():
+    coverurl = cs["item"]["album"]["images"][0]["url"]
+    response = requests.get(coverurl)
+    cover = pygame.image.load(BytesIO(response.content))
+    return cover
+
 def draw_currently_playing():
     global cs
     cs = sp.current_playback()
     global position
     global length
-    if cs:
+    playimage = pygame.image.load("play.png")
+    pauseimage = pygame.image.load("pause.png")
+
+    if cs and cs.get("item"):
         track = cs["item"]["name"]
         artist = cs["item"]["artists"][0]["name"]
         position = cs["progress_ms"]
@@ -370,10 +379,9 @@ def draw_currently_playing():
         pygame.draw.rect(screen, (255, 255, 255), bar)
         screen.blit(songtext, (bar.x, bar.y + 10))
         screen.blit(artisttext, (bar.x, bar.y + 5))
-        playimage = pygame.image.load("play.png")
         pauseimage = pygame.image.load("pause.png")
         if cp:
-            screen.blit(pauseimage, (340, 200))
+            screen.blit(pauseimage, (240, 200))
         else:
             screen.blit(playimage, (240, 200))
 
@@ -383,6 +391,9 @@ while running:
 
     draw_menu()
     draw_currently_playing()
+    currentsong = cs
+    if cs!= currentsong:
+        screen.blit(getcover(), 240, 150) 
 
     if select.wait_for_press(timeout=0):
         choice = currentoptions[selected]
