@@ -146,7 +146,36 @@ def volume_dec(amount = 15):
     sp.volume(new)
 
 def is_playing():
-    
+    playback = sp.current_playback()
+    if playback is None:
+        return False
+    else:
+        return True
+
+def progress():
+    playback = sp.current_playback()
+    if playback is None:
+        return None
+    track = playback.get("item")
+    return track["duration_ms"]
+
+def search_song(query, limit=10):
+    #should return name, artist, url, cover
+    results = sp.search(q = query, type = "track", limit=limit)
+    songs = []
+    for track in results["tracks"]["items"]:
+        coverurl = None
+        if track["album"]["images"]:
+            coverurl = track["album"]["images"][0]["url"]
+        songs.append({"name": track["name"],
+                      "artists": track["artists"][0]["name"],
+                      "uri": track["uri"]
+                      "cover": coverurl})
+        return songs
+
+
+
+
 
 
 
