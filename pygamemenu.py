@@ -57,17 +57,13 @@ song_loaded = False
 
 visible_songs = 8
 def openlikedsongs():
+    global selected
+    global cover
     songlist = sf.liked_songs()
     currentoptions = list(songlist.keys())
     scrolloffset = 0
     selected = 0
     while True:
-        if selected< scrolloffset:
-            scrolloffset = selected
-        if selected >= scrolloffset + visible_songs:
-            scrolloffset = selected - visible_songs + 1
-        
-
         if up.is_pressed:
             if selected>0:
                 selected -= 1
@@ -78,10 +74,9 @@ def openlikedsongs():
             time.sleep(0.15)
         if select.is_pressed:
             song = currentoptions[selected]
-            global coverurl
-            global response
             uri = songlist[song][1]
             sp.start_playback(uris=[uri])
+            cover = getcover()
             for i in range(selected+1, len(currentoptions)):
                 next_song = currentoptions[i]
                 next_uri = songlist[next_song][1]
@@ -94,7 +89,7 @@ def openlikedsongs():
 
 
 def openplaylists():
-
+    print
 
 def opensearch():
     print
@@ -285,7 +280,8 @@ def draw_menu():
 def drawmenugeneral(options):
     screen.fill(background)
     pygame.draw.rect(screen, (40, 40, 40), (2, 0, 240, 360))
-    for index, item in enumerate(options):
+    visibleoptions = currentoptions[scrolloffset: scrolloffset + visible_songs]
+    for index, item in enumerate(visibleoptions):
         entryrects = pygame.Rect(2, index * 30, 240, 30)
         if index == selected:
             pygame.draw.rect(screen, (80, 80, 80), entryrects)
@@ -296,6 +292,7 @@ def drawmenugeneral(options):
 
 
 def getcover():
+    cs = sp.current_playback()
     coverurl = cs["item"]["album"]["images"][0]["url"]
     response = requests.get(coverurl)
     cover = pygame.image.load(BytesIO(response.content))
@@ -306,23 +303,21 @@ pauseimage = pygame.image.load("pause.png")
 
 def draw_currently_playing():
     song = sf.get_current_song()
-    response = requests.get(song["cover"])
-    cover = pygame.image.load(BytesIO(response.content))
-    cover = pygame.transform.scale(cover, (120, 120))
+    global cover
     screen.blit(cover, (340, 150))
 
     songtext = font.render(song["name"].title(), False, (255, 255, 255))
-    artisttext = font.render(song["artists"].title, False, (230, 230, 230))
-    screen.blit(songtext, (bar.x, bar.y + 10))
-    screen.blit(artisttext, (bar.x, bar.y + 5))
+    artisttext = font.render(song["artists"].title(), False, (230, 230, 230))
+    screen.blit(songtext, (300, 120 + 10))
+    screen.blit(artisttext, (300, 120 + 5))
 
     if song["duration"] > 0:
         progress = 200*(song["progress"]/song["duration"])
         pygame.draw.rect(screen, (255, 255, 255), (300, 120, progress, 5))
     if song["is_playing"]:
-        screen.blit(pauseimage), (240, 200)
+        screen.blit(pauseimage, (240, 200))
     else:
-        screen.blit(playimage), (240, 200)
+        screen.blit(playimage, (240, 200))
 
 
 selected = 0
@@ -336,9 +331,6 @@ while running:
     
     draw_menu()
     draw_currently_playing()
-    currentsong = cs
-    if cs!= currentsong:
-        screen.blit(getcover(), 240, 150) 
 
     if select.wait_for_press(timeout=0):
         choice = currentoptions[selected]
