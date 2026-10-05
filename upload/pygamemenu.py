@@ -1,0 +1,355 @@
+from gpiozero import Button
+from gpiozero import PWMLED
+import os
+import subprocess
+import time
+from picamera2 import Picamera2
+from datetime import datetime
+from PIL import Image, ImageEnhance, ImageFilter
+import spotfunctions as sf
+import requests
+from io import BytesIO
+import spotipy
+from spotipy.oauth2 import SpotifyOAuth
+
+scope = (
+    "user-read-playback-state "
+    "user-modify-playback-state "
+    "user-read-playback-state "
+    "playlist-read-private "
+    "user-library-modify "
+    "user-library-read "
+)
+
+sp = spotipy.Spotify(
+    auth_manager = SpotifyOAuth(
+        scope = scope
+    )
+)
+
+import pygame
+pygame.init()
+up = Button(26)
+down = Button(6)
+left = Button(1)
+right = Button(2)
+action1 = Button(3)
+action2 = Button(4)
+action3 = Button (9)
+action4 = Button(7)
+select = Button(5)
+back = Button(8)
+
+clock=pygame.time.Clock()
+
+background = (30, 30, 30)
+font = pygame.font.SysFont("Helvetica", 26)
+
+screen = pygame.display.set_mode((480, 360), pygame.FULLSCREEN)
+running = True
+pygame.mouse.set_visible(False)
+
+def goback():
+    history.pop()
+
+currently_playing = False
+song_loaded = False
+
+visible_songs = 8
+def openlikedsongs():
+    global selected
+    global cover
+    songlist = sf.liked_songs()
+    currentoptions = list(songlist.keys())
+    scrolloffset = 0
+    selected = 0
+    while True:
+        if up.is_pressed:
+            if selected>0:
+                selected -= 1
+            time.sleep(0.15)
+        if down.is_pressed:
+            if selected < len(currentoptions) - 1:
+                selected += 1
+            time.sleep(0.15)
+        if select.is_pressed:
+            song = currentoptions[selected]
+            uri = songlist[song][1]
+            sp.start_playback(uris=[uri])
+            cover = getcover()
+            for i in range(selected+1, len(currentoptions)):
+                next_song = currentoptions[i]
+                next_uri = songlist[next_song][1]
+                sp.add_to_queue(next_uri)
+            select.wait_for_release()
+        if back.is_pressed:
+            back.wait_for_release()
+            return
+        clock.tick(60)
+
+
+def openplaylists():
+    print
+
+def opensearch():
+    print
+
+def openlocal():
+    print
+
+def opengames():
+    print
+
+def runDOOM():
+    
+    global font
+    global clock
+    global screen
+    global running
+    select.wait_for_release()
+    doomrunning = subprocess.Popen(["chocolate-doom"])
+    pygame.mouse.set_visible(False)
+    select.wait_for_press()
+
+    doomrunning.terminate()
+    doomrunning.wait()
+    time.sleep(0.5)
+
+    pygame.display.quit()
+    pygame.display.init()
+
+    screen = pygame.display.set_mode((480, 360), pygame.FULLSCREEN)
+    pygame.mouse.set_visible(False)
+    font = pygame.font.SysFont("Helvetica", 26)
+    clock = pygame.time.Clock()
+
+
+def runPSGAME():
+    print ("running psgame")
+
+def runGAMEBOY():
+    print
+
+def poweroff():
+    subprocess.run(["sudo", "poweroff"])
+
+
+def backlight():
+    global backlightvalue
+    select.wait_for_release()
+    pygame.draw.rect(screen, (40, 40, 40), (2, 0, 240, 360))
+
+    text = font.render("Brightness", False, (255, 255, 255))
+    screen.blit(text, (2, 2))
+
+    while True:
+
+        if down.wait_for_press(timeout=0):
+            backlightvalue = max(0, backlightvalue - 0.1)
+            down.wait_for_release()
+
+        if up.wait_for_press(timeout=0):
+            backlightvalue = min(1, backlightvalue + 0.1)
+            up.wait_for_release()
+
+        pygame.draw.rect(
+            screen,
+            (0, 0, 0),
+            (2, 40, 220, 16)
+        )
+
+        pygame.draw.rect(
+            screen,
+            (60, 60, 60),
+            (3, 42, int(220 * backlightvalue), 12)
+        )
+
+
+        pygame.display.flip()
+
+        if select.is_pressed:
+            select.wait_for_release()
+            return
+
+        clock.tick(60)
+
+
+def volume():
+    print
+
+def opencam():
+    print("opened camera")
+    select.wait_for_release()
+    cam = Picamera2()
+    cam.preview_configuration.main.size = (480, 320)
+    cam.preview_configuration.main.format = "BGR888"
+    picconfig = cam.create_still_configuration(main = {"size": (2592, 1944)})
+    cam.configure("preview")
+    cam.start()
+    cam.set_controls({"Saturation": 1.05, "Contrast" : 1.05, "Sharpness" : 1.05, "NoiseReductionMode":1, "ExposureValue": 0.7})
+
+    while True:
+        array = cam.capture_array()
+        img = pygame.image.frombuffer(array.data, (480, 320), "BGR")
+        screen.blit(img, (0,0))
+        pygame.display.flip()
+        if select.is_pressed:
+            select.wait_for_release()
+            break
+        if down.is_pressed:
+            down.wait_for_release()
+            timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+            filename = f"/home/cirrus/images/{timestamp}.jpg" 
+            cam.stop()
+        
+            cam.configure(picconfig) 
+            cam.start()          
+            cam.capture_file(filename)
+
+            img = Image.open(filename)
+            img = ImageEnhance.Color(img).enhance(1.1)
+            img = ImageEnhance.Contrast(img).enhance(1.05)
+            img = ImageEnhance.Sharpness(img).enhance(1.05)
+            img = img.filter(ImageFilter.GaussianBlur(0.45))
+            img.save(filename, quality=82)
+
+            pic = pygame.image.load(filename)
+            pic = pygame.transform.scale(pic, (480, 320))
+            screen.blit(pic, (0,0))
+            pygame.display.flip()
+            pygame.time.wait(5000)
+            clock.tick(60)
+            cam.stop()
+            
+            cam.configure("preview")
+            cam.start()
+    cam.stop()
+
+
+menus = { "Main":
+{
+"Music": "Music",
+"Games" : "Games",
+"Settings" : "Settings",
+"Camera" : opencam,
+"Power Off" : poweroff
+},
+"Music" : {
+"Liked Songs": openlikedsongs,
+"Playlists": openplaylists,
+"Search": opensearch,
+"Back": goback,
+},
+
+"Games" : {
+"Doom": runDOOM,
+"PS1": runPSGAME,
+"Back": goback
+},
+
+"Settings" : {
+"Volume": volume,
+"Backlight": backlight,
+"Back": goback
+}}
+
+history = ["Main"]
+currentmenu = history[-1]
+currentoptions = list(menus[currentmenu].keys())
+
+def clearscreen():
+    screen.fill((240,240,240))
+    pygame.draw.rect(screen, (30, 30, 30), (0,0,480,30))
+
+def draw_menu():
+    global currentmenu
+    global currentoptions
+    currentmenu = history[-1]
+    currentoptions = list(menus[currentmenu].keys())
+    screen.fill(background)
+    pygame.draw.rect(screen, (40, 40, 40), (2, 0, 240, 360))
+    for index, item in enumerate(currentoptions):
+        entryrects = pygame.Rect(2, index * 30, 240, 30)
+        if index == selected:
+            pygame.draw.rect(screen, (80, 80, 80), entryrects)
+        else:
+            pygame.draw.rect(screen, (40, 40, 40), entryrects)
+        text = font.render(item, False, (255, 255, 255))
+        screen.blit(text, (entryrects.x + 2, entryrects.y + 2 ) )
+
+def drawmenugeneral(options):
+    screen.fill(background)
+    pygame.draw.rect(screen, (40, 40, 40), (2, 0, 240, 360))
+    visibleoptions = currentoptions[scrolloffset: scrolloffset + visible_songs]
+    for index, item in enumerate(visibleoptions):
+        entryrects = pygame.Rect(2, index * 30, 240, 30)
+        if index == selected:
+            pygame.draw.rect(screen, (80, 80, 80), entryrects)
+        else:
+            pygame.draw.rect(screen, (40, 40, 40), entryrects)
+        text = font.render(item, False, (255, 255, 255))
+        screen.blit(text, (entryrects.x + 2, entryrects.y + 2 ) )
+
+
+def getcover():
+    cs = sp.current_playback()
+    coverurl = cs["item"]["album"]["images"][0]["url"]
+    response = requests.get(coverurl)
+    cover = pygame.image.load(BytesIO(response.content))
+    return cover
+
+playimage = pygame.image.load("play.png")
+pauseimage = pygame.image.load("pause.png")
+
+def draw_currently_playing():
+    song = sf.get_current_song()
+    global cover
+    screen.blit(cover, (340, 150))
+
+    songtext = font.render(song["name"].title(), False, (255, 255, 255))
+    artisttext = font.render(song["artists"].title(), False, (230, 230, 230))
+    screen.blit(songtext, (300, 120 + 10))
+    screen.blit(artisttext, (300, 120 + 5))
+
+    if song["duration"] > 0:
+        progress = 200*(song["progress"]/song["duration"])
+        pygame.draw.rect(screen, (255, 255, 255), (300, 120, progress, 5))
+    if song["is_playing"]:
+        screen.blit(pauseimage, (240, 200))
+    else:
+        screen.blit(playimage, (240, 200))
+
+
+selected = 0
+scrolloffset = 0
+
+while running:
+    if selected < scrolloffset:
+        scrolloffset = selected
+    if selected >= scrolloffset + visible_songs:
+        scrolloffset = selected - visible_songs + 1
+    
+    draw_menu()
+    draw_currently_playing()
+
+    if select.wait_for_press(timeout=0):
+        choice = currentoptions[selected]
+        action = menus[currentmenu][choice]
+        if isinstance (action, str):
+            history.append(choice)
+        else:
+            action()
+        selected = 0
+        select.wait_for_release()
+
+    if down.wait_for_press(timeout=0) and selected < len(currentoptions)-1:
+        selected += 1
+        down.wait_for_release()
+
+    if up.wait_for_press(timeout=0) and selected > 0:
+        selected -= 1
+        up.wait_for_release()
+
+    pygame.display.flip()
+    clock.tick(60)
+

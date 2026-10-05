@@ -7,6 +7,8 @@ from picamera2 import Picamera2
 from datetime import datetime
 from PIL import Image, ImageEnhance, ImageFilter
 import spotfunctions as sf
+import games
+import localmusic
 import requests
 from io import BytesIO
 import spotipy
@@ -23,24 +25,27 @@ scope = (
 
 sp = spotipy.Spotify(
     auth_manager = SpotifyOAuth(
-        scope = scope
+        scope = scope,
+        cache_path = sf.CACHE_PATH,
+        open_browser = False
     )
 )
 
 import pygame
 pygame.init()
-up = Button(26)
-down = Button(6)
-left = Button(1)
-right = Button(2)
-action1 = Button(3)
-action2 = Button(4)
-action3 = Button (9)
-action4 = Button(7)
-select = Button(5)
-back = Button(8)
+up = Button(14)
+down = Button(15)
+left = Button(4)
+right = Button(20)
+action1 = Button(26)
+action2 = Button(13)
+action3 = Button(6)
+action4 = Button(5)
+select = Button(27)
+back = Button(0)
 
 clock=pygame.time.Clock()
+os.makedirs("/home/cirrus/images", exist_ok=True)   # ADDED: camera crashes if this is missing
 
 background = (30, 30, 30)
 font = pygame.font.SysFont("Helvetica", 26)
@@ -53,12 +58,17 @@ def goback():
     history.pop()
 
 currently_playing = False
+cover = None              # ADDED: was undefined until a song was started -> NameError in draw_currently_playing()
+last_cover_url = None     # ADDED
 song_loaded = False
 
 visible_songs = 8
 def openlikedsongs():
     global selected
     global cover
+    global currentoptions   # ADDED: so drawmenugeneral() can see the song list
+    global scrolloffset     # ADDED
+    select.wait_for_release()   # ADDED: the press that opened this screen would otherwise start song #1
     songlist = sf.liked_songs()
     currentoptions = list(songlist.keys())
     scrolloffset = 0
@@ -73,18 +83,27 @@ def openlikedsongs():
                 selected += 1
             time.sleep(0.15)
         if select.is_pressed:
-            song = currentoptions[selected]
-            uri = songlist[song][1]
-            sp.start_playback(uris=[uri])
-            cover = getcover()
-            for i in range(selected+1, len(currentoptions)):
-                next_song = currentoptions[i]
-                next_uri = songlist[next_song][1]
-                sp.add_to_queue(next_uri)
+            # CHANGED: was 1 start_playback + one add_to_queue API call per remaining song
+            # (hundreds of calls -> Spotify rate-limits you and the UI freezes). One call now.
+            try:
+                sf.ensure_device()
+                uris = [songlist[s][1] for s in currentoptions[selected:selected+50]]
+                sp.start_playback(uris=uris, device_id=sf.get_device_id())
+                cover = getcover()
+            except Exception as err:
+                print("playback failed:", err)
             select.wait_for_release()
         if back.is_pressed:
             back.wait_for_release()
             return
+        # ADDED: this screen never drew anything
+        if selected < scrolloffset:
+            scrolloffset = selected
+        if selected >= scrolloffset + visible_songs:
+            scrolloffset = selected - visible_songs + 1
+        drawmenugeneral(currentoptions)
+        draw_currently_playing()
+        pygame.display.flip()
         clock.tick(60)
 
 
@@ -95,83 +114,102 @@ def opensearch():
     print
 
 def openlocal():
-    print
+    # CHANGED: was an unused stub (bare `print`). Now browses ~/music and starts playback.
+    tracks = localmusic.list_tracks()
+    if not tracks:
+        print("no tracks in", localmusic.MUSIC_DIR)
+        return
+    name = choose_from(tracks.keys())
+    if name is not None:
+        localmusic.play_name(name)
 
 def opengames():
     print
 
-def runDOOM():
-    
-    global font
-    global clock
-    global screen
-    global running
+buttons = {"up": up, "down": down, "left": left, "right": right,
+           "action1": action1, "action2": action2, "action3": action3, "action4": action4,
+           "select": select, "back": back}
+
+
+def run_external(cmd, keymap):
+    # ADDED. The old runDOOM launched Doom while pygame still owned the screen (kmsdrm allows only
+    # one owner, so Doom couldn't draw) and gave it no input. Flow now:
+    # pause music -> release display -> run game with GPIO->keyboard bridge -> take display back.
+    global font, clock, screen
     select.wait_for_release()
-    doomrunning = subprocess.Popen(["chocolate-doom"])
-    pygame.mouse.set_visible(False)
-    select.wait_for_press()
-
-    doomrunning.terminate()
-    doomrunning.wait()
-    time.sleep(0.5)
-
+    try:
+        if localmusic.is_active():
+            localmusic.pause()
+        else:
+            sf.pause()
+    except Exception:
+        pass
     pygame.display.quit()
+    result = games.run(cmd, buttons, keymap)
+    time.sleep(0.5)
     pygame.display.init()
-
     screen = pygame.display.set_mode((480, 360), pygame.FULLSCREEN)
     pygame.mouse.set_visible(False)
     font = pygame.font.SysFont("Helvetica", 26)
     clock = pygame.time.Clock()
+    return result
+
+
+def choose_from(options):
+    # ADDED: simple scrolling picker for ROM lists. Returns the chosen name or None (BACK).
+    global selected, scrolloffset, currentoptions
+    saved = (selected, scrolloffset, currentoptions)
+    currentoptions = list(options)
+    selected, scrolloffset = 0, 0
+    select.wait_for_release()
+    choice = None
+    while True:
+        if up.is_pressed and selected > 0:
+            selected -= 1
+            time.sleep(0.15)
+        if down.is_pressed and selected < len(currentoptions) - 1:
+            selected += 1
+            time.sleep(0.15)
+        if select.is_pressed and currentoptions:
+            choice = currentoptions[selected]
+            select.wait_for_release()
+            break
+        if back.is_pressed:
+            back.wait_for_release()
+            break
+        if selected < scrolloffset:
+            scrolloffset = selected
+        if selected >= scrolloffset + visible_songs:
+            scrolloffset = selected - visible_songs + 1
+        drawmenugeneral(currentoptions)
+        pygame.display.flip()
+        clock.tick(60)
+    selected, scrolloffset, currentoptions = saved
+    return choice
+
+
+def runDOOM():
+    run_external(games.doom_command(), games.KEYMAP_DOOM)
+
+
+def run_retroarch(system):
+    roms = games.list_roms(system)
+    if not roms:
+        print("no ROMs in", games.ROM_DIRS[system])
+        return
+    name = choose_from(roms.keys())
+    if name is not None:
+        run_external(games.retroarch_command(system, roms[name]), games.KEYMAP_RETROARCH)
 
 
 def runPSGAME():
-    print ("running psgame")
+    run_retroarch("ps1")
 
 def runGAMEBOY():
-    print
+    run_retroarch("gb")
 
 def poweroff():
     subprocess.run(["sudo", "poweroff"])
-
-
-def backlight():
-    global backlightvalue
-    select.wait_for_release()
-    pygame.draw.rect(screen, (40, 40, 40), (2, 0, 240, 360))
-
-    text = font.render("Brightness", False, (255, 255, 255))
-    screen.blit(text, (2, 2))
-
-    while True:
-
-        if down.wait_for_press(timeout=0):
-            backlightvalue = max(0, backlightvalue - 0.1)
-            down.wait_for_release()
-
-        if up.wait_for_press(timeout=0):
-            backlightvalue = min(1, backlightvalue + 0.1)
-            up.wait_for_release()
-
-        pygame.draw.rect(
-            screen,
-            (0, 0, 0),
-            (2, 40, 220, 16)
-        )
-
-        pygame.draw.rect(
-            screen,
-            (60, 60, 60),
-            (3, 42, int(220 * backlightvalue), 12)
-        )
-
-
-        pygame.display.flip()
-
-        if select.is_pressed:
-            select.wait_for_release()
-            return
-
-        clock.tick(60)
 
 
 def volume():
@@ -238,18 +276,19 @@ menus = { "Main":
 "Liked Songs": openlikedsongs,
 "Playlists": openplaylists,
 "Search": opensearch,
+"Local Music": openlocal,
 "Back": goback,
 },
 
 "Games" : {
 "Doom": runDOOM,
 "PS1": runPSGAME,
+"Game Boy": runGAMEBOY,
 "Back": goback
 },
 
 "Settings" : {
 "Volume": volume,
-"Backlight": backlight,
 "Back": goback
 }}
 
@@ -283,7 +322,7 @@ def drawmenugeneral(options):
     visibleoptions = currentoptions[scrolloffset: scrolloffset + visible_songs]
     for index, item in enumerate(visibleoptions):
         entryrects = pygame.Rect(2, index * 30, 240, 30)
-        if index == selected:
+        if index + scrolloffset == selected:
             pygame.draw.rect(screen, (80, 80, 80), entryrects)
         else:
             pygame.draw.rect(screen, (40, 40, 40), entryrects)
@@ -291,20 +330,51 @@ def drawmenugeneral(options):
         screen.blit(text, (entryrects.x + 2, entryrects.y + 2 ) )
 
 
+def load_cover(url):
+    # ADDED: download + shrink (raw covers are 640x640 and would swamp a 480x360 screen)
+    if not url:
+        return None
+    try:
+        response = requests.get(url, timeout=5)
+        img = pygame.image.load(BytesIO(response.content))
+        return pygame.transform.smoothscale(img, (120, 120))
+    except Exception:
+        return None
+
+
 def getcover():
-    cs = sp.current_playback()
-    coverurl = cs["item"]["album"]["images"][0]["url"]
-    response = requests.get(coverurl)
-    cover = pygame.image.load(BytesIO(response.content))
-    return cover
+    # CHANGED: current_playback() is often None/stale right after start_playback(); don't crash
+    try:
+        cs = sp.current_playback()
+        return load_cover(cs["item"]["album"]["images"][0]["url"])
+    except Exception:
+        return None
 
 playimage = pygame.image.load("play.png")
 pauseimage = pygame.image.load("pause.png")
 
 def draw_currently_playing():
-    song = sf.get_current_song()
     global cover
-    screen.blit(cover, (340, 150))
+    global last_cover_url
+    if localmusic.is_active():           # ADDED: local playback takes over this same display area
+        song = localmusic.get_current()
+        if song is None:
+            return
+        songtext = font.render(song["name"].title(), False, (255, 255, 255))
+        screen.blit(songtext, (300, 120 + 10))
+        if song["duration"] > 0:
+            progress = 200 * (song["progress"] / song["duration"])
+            pygame.draw.rect(screen, (255, 255, 255), (300, 120, progress, 5))
+        screen.blit(pauseimage if song["is_playing"] else playimage, (240, 200))
+        return
+    song = sf.get_current_song()
+    if song is None:                     # nothing playing
+        return
+    if song["cover"] != last_cover_url:  # ADDED: refresh art whenever the track changes
+        last_cover_url = song["cover"]
+        cover = load_cover(last_cover_url)
+    if cover is not None:
+        screen.blit(cover, (340, 150))
 
     songtext = font.render(song["name"].title(), False, (255, 255, 255))
     artisttext = font.render(song["artists"].title(), False, (230, 230, 230))
@@ -349,6 +419,28 @@ while running:
     if up.wait_for_press(timeout=0) and selected > 0:
         selected -= 1
         up.wait_for_release()
+
+    try:
+        if action1.is_pressed:
+            if localmusic.is_active():                 
+                song = localmusic.get_current()
+                localmusic.pause() if (song and song["is_playing"]) else localmusic.resume()
+            else:
+                song = sf.get_current_song()
+                if song and song["is_playing"]:
+                    sf.pause()
+                else:
+                    sf.ensure_device()
+                    sf.resume()
+            action1.wait_for_release()
+        if action2.is_pressed:
+            localmusic.next_track() if localmusic.is_active() else sf.next_song()
+            action2.wait_for_release()
+        if action3.is_pressed:
+            localmusic.previous_track() if localmusic.is_active() else sf.previous_song()
+            action3.wait_for_release()
+    except Exception as err:
+        print("media control failed:", err)
 
     pygame.display.flip()
     clock.tick(60)

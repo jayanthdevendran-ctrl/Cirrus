@@ -1,0 +1,8 @@
+import subprocess
+from gpiozero import Button
+select = Button(5)
+
+def runDOOM():
+    pygame.display
+    select.wait_for_press()
+    subprocess.run()
