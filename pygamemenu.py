@@ -107,11 +107,11 @@ def openlikedsongs():
         clock.tick(60)
 
 
-def openplaylists():
-    print
+#def openplaylists():
+#    print
 
-def opensearch():
-    print
+#def opensearch():
+#    print
 
 def openlocal():
     # CHANGED: was an unused stub (bare `print`). Now browses ~/music and starts playback.
@@ -156,7 +156,6 @@ def run_external(cmd, keymap):
 
 
 def choose_from(options):
-    # ADDED: simple scrolling picker for ROM lists. Returns the chosen name or None (BACK).
     global selected, scrolloffset, currentoptions
     saved = (selected, scrolloffset, currentoptions)
     currentoptions = list(options)
@@ -202,12 +201,6 @@ def run_retroarch(system):
         run_external(games.retroarch_command(system, roms[name]), games.KEYMAP_RETROARCH)
 
 
-def runPSGAME():
-    run_retroarch("ps1")
-
-def runGAMEBOY():
-    run_retroarch("gb")
-
 def poweroff():
     subprocess.run(["sudo", "poweroff"])
 
@@ -220,7 +213,7 @@ def opencam():
     select.wait_for_release()
     cam = Picamera2()
     cam.preview_configuration.main.size = (480, 320)
-    cam.preview_configuration.main.format = "BGR888"
+    cam.preview_configuration.main.format = "RGB888"
     picconfig = cam.create_still_configuration(main = {"size": (2592, 1944)})
     cam.configure("preview")
     cam.start()
@@ -228,7 +221,7 @@ def opencam():
 
     while True:
         array = cam.capture_array()
-        img = pygame.image.frombuffer(array.data, (480, 320), "BGR")
+        img = pygame.image.frombuffer(array.data, (480, 320), "RGB")
         screen.blit(img, (0,0))
         pygame.display.flip()
         if select.is_pressed:
@@ -274,16 +267,16 @@ menus = { "Main":
 },
 "Music" : {
 "Liked Songs": openlikedsongs,
-"Playlists": openplaylists,
-"Search": opensearch,
+#"Playlists": openplaylists,
+#"Search": opensearch,
 "Local Music": openlocal,
 "Back": goback,
 },
 
 "Games" : {
 "Doom": runDOOM,
-"PS1": runPSGAME,
-"Game Boy": runGAMEBOY,
+#"PS1": runPSGAME,
+#"Game Boy": runGAMEBOY,
 "Back": goback
 },
 
