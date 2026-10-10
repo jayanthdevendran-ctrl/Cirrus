@@ -1,3 +1,6 @@
+import os
+import time
+import threading
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
 
@@ -9,14 +12,18 @@ scope = (
     "user-library-read "
 )
 
+#default callback from spotify dev api
+os.environ.setdefault("SPOTIPY_REDIRECT_URI", "http://127.0.0.1:8888/callback")
+CACHE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".spotcache")
+
 sp = spotipy.Spotify(
     auth_manager = SpotifyOAuth(
-        scope = scope
+        scope = scope,
+        cache_path = CACHE_PATH,
+        open_browser = False
     )
 )
 
-export SPOTIPY_CLIENT_ID = "myid" 
-export SPOTIPY_CLIENT_SECRET
 
 def liked_songs():
     lsongs = {}
@@ -30,7 +37,7 @@ def liked_songs():
                 cover_url = song["album"]["images"][0]["url"]
                 lsongs[song["name"]] = [song["artists"][0]["name"], song["uri"], cover_url]
         if results["next"]:
-            results = sp.ext(results)
+            results = sp.next(results)
         else:
             break
     return lsongs
@@ -45,14 +52,17 @@ def playlists():
             userplaylists[pl["name"]] = pl["id"]
         if results["next"]:
             results = sp.next(results)
+        else:
+            break
     return userplaylists
 
 def openplaylist(playlist_id):
-    results = sp.playlists_tracks(playlist_id)
+    # Spotify renamed /tracks -> /items (Feb/Mar 2026); spotipy may still call the old one
+    results = sp._get(f"playlists/{playlist_id}/items", limit=100)
     songs = []
     while results:
         for item in results["items"]:
-            track = item["track"]
+            track = item.get("item") or item.get("track")  # "track" renamed to "item" in 2026
             if track is None:
                 continue
             else:
@@ -122,7 +132,7 @@ def current_song():
             "uri" : track["uri"],
             "cover": cover_url,
             "progress": playback["progress_ms"],
-            "duration": playback["duration_ms"],
+            "duration": track["duration_ms"],
             "is_playing": playback["is_playing"]}
 
 def set_volume(volume):
@@ -169,13 +179,80 @@ def search_song(query, limit=10):
             coverurl = track["album"]["images"][0]["url"]
         songs.append({"name": track["name"],
                       "artists": track["artists"][0]["name"],
-                      "uri": track["uri"]
+                      "uri": track["uri"],
                       "cover": coverurl})
-        return songs
+    return songs
 
 
+# =====================  ADDED  ===================== everything after this is claude
+DEVICE_NAME = os.environ.get("SPOTIFY_DEVICE_NAME", "cirrus")   # must match LIBRESPOT_NAME in /etc/raspotify/conf
 
 
+def get_device_id():
+    """Spotify Connect id of the Pi (raspotify). None if it isn't visible."""
+    try:
+        devices = sp.devices().get("devices", [])
+    except Exception:
+        return None
+    for d in devices:
+        if d["name"].lower() == DEVICE_NAME.lower():
+            return d["id"]
+    return None
 
 
+def ensure_device():
+    """Make the Pi the active playback device so start_playback() doesn't 404."""
+    dev = get_device_id()
+    if dev is None:
+        return None
+    try:
+        pb = sp.current_playback()
+        if pb is None or pb.get("device", {}).get("id") != dev:
+            sp.transfer_playback(dev, force_play=False)
+            time.sleep(0.7)
+    except Exception:
+        pass
+    return dev
+
+
+# Background poller: the UI redraws ~60x/s, so it must never call the Spotify API itself.
+_np = {"data": None, "t": 0.0}
+_poller_started = False
+
+
+def _poll_loop():
+    while True:
+        try:
+            pb = sp.current_playback()
+            data = None
+            if pb and pb.get("item"):
+                tr = pb["item"]
+                imgs = tr["album"]["images"]
+                data = {"name": tr["name"],
+                        "artists": tr["artists"][0]["name"],
+                        "uri": tr["uri"],
+                        "cover": imgs[0]["url"] if imgs else None,
+                        "progress": pb.get("progress_ms") or 0,
+                        "duration": tr["duration_ms"],
+                        "is_playing": pb["is_playing"]}
+            _np["data"] = data
+            _np["t"] = time.time()
+        except Exception:
+            pass
+        time.sleep(2)
+
+
+def get_current_song():
+    """Non-blocking. Same keys pygamemenu.draw_currently_playing() reads. None if idle."""
+    global _poller_started
+    if not _poller_started:
+        _poller_started = True
+        threading.Thread(target=_poll_loop, daemon=True).start()
+    d = _np["data"]
+    if d is None:
+        return None
+    d = dict(d)
+    if d["is_playing"]:
+        d["progress"] = min(d["duration"], d["progress"] + (time.time() - _np["t"]) * 1000)
+    return d
 

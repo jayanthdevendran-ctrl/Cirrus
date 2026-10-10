@@ -1,6 +1,10 @@
 [Unit]
 Description=Pygame Menu
 After=systemd-user-sessions.service
+# ADDED
+After=getty@tty1.service
+# ADDED: stop the login prompt fighting for tty1
+Conflicts=getty@tty1.service
 
 [Service]
 Type=simple
@@ -17,6 +21,10 @@ TTYVHangup=yes
 TTYVTDisallocate=yes
 
 Environment=SDL_VIDEODRIVER=kmsdrm
+#journalctl
+Environment=PYTHONUNBUFFERED=1
+#spotify credentials
+EnvironmentFile=/home/cirrus/pyscripts/spotify.env
 
 ExecStart=/usr/bin/python3 /home/cirrus/pyscripts/pygamemenu.py
 
