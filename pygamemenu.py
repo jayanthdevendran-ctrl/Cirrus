@@ -55,7 +55,7 @@ action1 = Button(26)
 action2 = Button(13)
 action3 = Button(6)
 action4 = Button(5)
-select = Button(27)
+select = Button(22)
 back = Button(0)
 
 clock=pygame.time.Clock()
