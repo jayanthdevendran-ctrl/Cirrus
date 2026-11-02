@@ -13,9 +13,9 @@ The short of it is that, I want an analog device that can occupy my love for vid
 
 Right now, as i write this before building it, as part of project review, I can guestimate around 5 hours? Building is not very complicated, besides wiring being a possible issue, but with some creative harnesses and management, 5 for troubleshooting, debugging, assembling, and not counting printing seems pretty fair
 
-### What future updated can I expect to this?
+### What future updates can I expect for this?
 
-One thing I can see myself doing for sure, is making it a pcb instead, currently the wiring is my most iffy part of the build, plus a pcb would cut down on space massively, removing wiring and breakout boards and help me give it a much smaller profile. Secondly, I'd want to switch to another battery, the current 10k mah battery is massive, and likely overkill.
+One thing I can see myself doing for sure, is making it a pcb instead, currently the wiring is my most iffy part of the build, a pcb would cut down on space massively, removing wiring and breakout boards and help me give it a much smaller profile. Secondly, I'd want to switch to another battery, the current 10k mah battery is massive, and likely overkill.
 
 ### Can I build this myself?
 
