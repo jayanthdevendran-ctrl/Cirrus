@@ -144,6 +144,23 @@ Since ive got no pcb right now this is just a kicad representation of the physic
 ## Bill Of Materials:
 This is the BOM as it stands, it assumes I print everything myself with my ender3, include pricing based on your 3d printer availability. Since forge can avail printing legion I might use that to get around the ender 3's quality bottle necks.
 
+| Item | Quantity | Description | Link | Price (INR) |
+|---|---:|---|---|---:|
+| NOVA 125785 Battery | 1 | 10,000 mAh 3.7V LiPo Battery | [Robu.in](https://robu.in/product/nova-125785-10000mah-3-7v-lipo-battery-pack/) | 1,132 |
+| IP5310 Charge Module | 1 | 5V 3A Type C Boost Converter + Step Up Charging Board | [Robu.in](https://robu.in/product/ip5310-5v-3a-type-c-boost-power-module/) | 106.80 |
+| Raspberry Pi 02w | 1 | Dev Board | [Robu.in](https://robu.in/product/raspberry-pi-zero-2-w/) | 1,647 |
+| Pi Zero V1.3 Camera Cable | 1 | 0.5mm to 1mm Pi Zero form factor camera cable | [Robu.in](https://robu.in/product/raspberry-pi-zero-v1-3-camera-cable/) | 74 |
+| ILI 9488 3.5 inch SPI Display | 1 | 480x320 colour SPI TFT display | [Robu.in](https://robu.in/product/3-5-inch-spi-50pin-tft-lcd-touch-moduleili9488-driver-480x320-color-screen/) | 1,029 |
+| Cooling Fan | 1 | 5V mini fan for a Pi | [Robocraze](https://robocraze.com/products/5v-mini-fan-for-raspberry-pi) | 149 |
+| Camera Module | 1 | V1.3 5MP Pi Camera Module | [Robocraze](https://robocraze.com/products/raspberry-pi-5mp-camera-module) | 449 |
+| Push Buttons | 20 | 2 × 10-piece packs of 6x6x5mm tactile push buttons | [Robocraze](https://robocraze.com/products/4-pins-dip-momentary-square-tactile-push-button-switch-10-pieces-6x6x5mm) | 32 |
+| Vero Board | 1 | 4x3 inch prototyping board | [Robocraze](https://robocraze.com/products/vero-board-3-x4) | 28 |
+| 3D Print | 1 | ABS 3D print of the frame + buttons | [Robu.in](https://robu.in/product/3d-printing-service1/) | 708 |
+| Adafruit TLV320DAC3100 | 1 | I2S DAC with built-in amplifier and direct headphone stereo output | [Robu.in](https://robu.in/product/adafruit-tlv320dac3100-i2s-dac-with-headphone-and-speaker-out/) | 1,109 |
+| M3 Screws | 20 | Screws to mount everything else, plus extras | [OnlyScrews](https://onlyscrews.in/products/phillips-pan-head-m3-x-12mm-pack-of-20) | 40 |
+| M2 Screws | 10 | Screws for Pi, charging board and amp | [OnlyScrews](https://onlyscrews.in/products/m2-x-6mm-phillips-pan-head-ss-304-screw) | 20 |
+| **TOTAL** | **40** | | | **6,523.80** |
+
 <img width="1127" height="454" alt="image" src="https://github.com/user-attachments/assets/c977bc31-a5ad-4d9f-b447-aa36d3bd640b" />
 
 # C'est Fini
