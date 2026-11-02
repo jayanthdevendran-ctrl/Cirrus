@@ -1,0 +1,15 @@
+Item,Quantity,Description,Link,Price (in INR)
+NOVA 125785 Battery,1,"10,000 mAh 3.7v LiPo Battery",https://robu.in/product/nova-125785-10000mah-3-7v-lipo-battery-pack/,1132
+IP5310 Charge Module,1,5V 3A Type C Boost Convertor + Step Up Charging Board,https://robu.in/product/ip5310-5v-3a-type-c-boost-power-module/,106.8
+Raspberry Pi 02w,1,Dev Board,https://robu.in/product/raspberry-pi-zero-2-w/,1647
+Pi Zero V1.3 Camera Cable,1,0.5mm to 1mm pi zero form factor camera cable,https://robu.in/product/raspberry-pi-zero-v1-3-camera-cable/,74
+ILI 9488 3.5 inch SPI Display,1,480x320 color spi tft display,https://robu.in/product/3-5-inch-spi-50pin-tft-lcd-touch-moduleili9488-driver-480x320-color-screen/,1029
+Cooling Fan,1,5V mini fan for a pi,https://robocraze.com/products/5v-mini-fan-for-raspberry-pi?_pos=1&_sid=190178377&_ss=r,149
+Camera Module,1,V1.3 5MP Pi Camera Module,https://robocraze.com/products/raspberry-pi-5mp-camera-module?_pos=21&_sid=190178377&_ss=r,449
+Push Buttons,2 x 10 piece packs = 20 total,Tactile push buttons 6x6x5mm,https://robocraze.com/products/4-pins-dip-momentary-square-tactile-push-button-switch-10-pieces-6x6x5mm?variant=43223713874144,32
+Vero Board,1,4x3 inch Prototyping Board,https://robocraze.com/products/vero-board-3-x4?variant=40192561873049,28
+3D print,1,A ABS 3D print of the frame + buttons,https://robu.in/product/3d-printing-service1/,708
+Adafruit TLV320DAC3100,1,I2S dac with built in amplifier that gives direct headphone stereo output,https://robu.in/product/adafruit-tlv320dac3100-i2s-dac-with-headphone-and-speaker-out/,1109
+M3 screws,20,"screws to mount everything else, plus extras",https://onlyscrews.in/products/phillips-pan-head-m3-x-12mm-pack-of-20,40
+M2 screws,10,"screws for pi, charging board and amp",https://onlyscrews.in/products/m2-x-6mm-phillips-pan-head-ss-304-screw,20
+TOTAL,40,,,6523.8
