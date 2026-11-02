@@ -42,11 +42,13 @@ The music path:
 <img width="1599" height="965" alt="image" src="https://github.com/user-attachments/assets/7b209003-8ebb-4abf-9963-d8a3a27efd32" />
 <img width="1600" height="936" alt="image" src="https://github.com/user-attachments/assets/6f6c5e64-7ce0-4bcf-95dd-bb17488eefd7" />
 
+
 2. Games
 Currently I've only got Doom installed on this, currently DOOM 2, before this Chocolate DOOM. The retroarch function is written in firmware, however due to issues with the cores needed (PCSX ReARMed) installation I've halted that and decided to ship the current working Cirrus.
 
 <img width="1600" height="906" alt="image" src="https://github.com/user-attachments/assets/0ce82156-e4bd-4ef2-92bb-477ef0cc94d2" />
 <img width="1079" height="630" alt="image" src="https://github.com/user-attachments/assets/c82362e1-4800-4957-91cc-29ad5a9fcf7f" />
+
 
 3. Camera
 Im using a picam 1.3, its not the greatest, so I've done my best to simulate the kind of pictures I get on my samsung vluu i100, it hasnt worked amazingly, all these values can be changed by you, to your liking. Exporting the photos involves removing the sd card from the pi and inserting it into your laptop/desktop as needed, or using SCP via SSH.
@@ -144,7 +146,7 @@ This is the BOM as it stands, it assumes I print everything myself with my ender
 
 <img width="1127" height="454" alt="image" src="https://github.com/user-attachments/assets/c977bc31-a5ad-4d9f-b447-aa36d3bd640b" />
 
-#C'est Fini
+# C'est Fini
 and thats it I guess, you can ofcourse make any changes as you wish and adapt my design as you wish, the code is around 60 percent me 40 percent claude, feel free to email me at : jayanthdevendran@gmail.com
 Its been a blast working on this project, my first hackclub submission hopefully the first of many, since I will be turning 18 soon. Best wishes to anyone reading this, hope you live long fulfilling lives. 
 
