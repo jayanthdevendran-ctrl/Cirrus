@@ -45,6 +45,7 @@ The music path:
 
 
 2. Games
+
 Currently I've only got Doom installed on this, currently DOOM 2, before this Chocolate DOOM. The retroarch function is written in firmware, however due to issues with the cores needed (PCSX ReARMed) installation I've halted that and decided to ship the current working Cirrus.
 
 <img width="1600" height="906" alt="image" src="https://github.com/user-attachments/assets/0ce82156-e4bd-4ef2-92bb-477ef0cc94d2" />
@@ -52,6 +53,7 @@ Currently I've only got Doom installed on this, currently DOOM 2, before this Ch
 
 
 3. Camera
+   
 Im using a picam 1.3, its not the greatest, so I've done my best to simulate the kind of pictures I get on my samsung vluu i100, it hasnt worked amazingly, all these values can be changed by you, to your liking. Exporting the photos involves removing the sd card from the pi and inserting it into your laptop/desktop as needed, or using SCP via SSH.
 
 <img width="1600" height="823" alt="image" src="https://github.com/user-attachments/assets/a5da2baa-32e9-4d1e-b216-12f8a48147d7" />
