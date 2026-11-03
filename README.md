@@ -37,6 +37,7 @@ SPOTIPY_CLIENT_SECRET=your_client_secret_here
 SPOTIPY_REDIRECT_URI=http://127.0.0.1:8888/callback
 ```
 To get this info set up a spotify developer account and accordingly set the details
+
 The music path:
 
 <img width="1599" height="965" alt="image" src="https://github.com/user-attachments/assets/7b209003-8ebb-4abf-9963-d8a3a27efd32" />
